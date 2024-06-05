@@ -1,4 +1,4 @@
-use collection::{get_collections, Collection, User};
+use collection::{get_collections, Collection, Entry};
 use colors::*;
 use crossterm::{
     event::{
@@ -86,18 +86,21 @@ fn main() -> anyhow::Result<()> {
 
 struct App {
     state: TableState,
-    data: HashMap<User, Collection>,
+    data: Collection,
     search: String,
     character_index: usize,
+    scroll_index: usize,
 }
 
 impl App {
     fn new() -> Self {
+        let data = get_collections().expect("Failed to fetch collections");
         Self {
             state: TableState::default(),
-            data: get_collections().expect("Failed to fetch collections"),
+            data,
             search: String::new(),
             character_index: 0,
+            scroll_index: 0,
         }
     }
 
@@ -192,14 +195,13 @@ fn render_table(f: &mut Frame, app: &mut App, area: Rect) {
     let rows = app
         .data
         .iter()
-        .flat_map(|(owner, data)| data.iter().map(move |data| (owner, data)))
-        .filter(|(owner, data)| data.matches(app.search.clone()))
-        .map(|(owner, data)| data.as_row(*owner).style(Style::new().fg(ROW_FG)).height(1));
+        .filter(|data| data.matches(app.search.clone()))
+        .map(|data| data.as_row().style(Style::new().fg(ROW_FG)).height(1));
     let t = Table::new(
         rows,
         [
             // + 1 is for padding.
-            Constraint::Max(7),
+            Constraint::Max(15),
             Constraint::Length(2),
             Constraint::Min(10),
             Constraint::Length(4),

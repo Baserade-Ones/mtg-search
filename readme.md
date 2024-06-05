@@ -15,3 +15,4 @@ Currently only supports (hardcoded) Archidekt collections
     - [ ] By Id's
     - [ ] By Price
  - [ ] Wantlist filtering
+ - [ ] Scroll

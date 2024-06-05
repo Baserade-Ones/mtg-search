@@ -3,7 +3,6 @@ use ratatui::{
     widgets::{Cell, Row},
 };
 use reqwest::blocking::Client;
-use std::collections::HashMap;
 use std::io::Cursor;
 use strum::VariantArray;
 
@@ -21,6 +20,8 @@ struct Response {
 pub type Collection = Vec<Entry>;
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct Entry {
+    #[serde(skip)]
+    owner: Option<User>,
     #[serde(rename = "Quantity")]
     quantity: u8,
     #[serde(rename = "Name")]
@@ -36,9 +37,9 @@ pub struct Entry {
 }
 
 impl Entry {
-    pub fn as_row(&self, owner: User) -> Row {
+    pub fn as_row(&self) -> Row {
         Row::new([
-            owner.to_cell(),
+            self.owner.unwrap().to_cell(),
             Cell::from(Text::from(format!("{}", self.quantity))),
             Cell::from(Text::from(self.name.clone())),
             Cell::from(Text::from(self.set.clone())),
@@ -58,6 +59,9 @@ impl Entry {
 pub enum User {
     Strosel,
     Amon8808,
+    MathIsMath,
+    Urgalurga,
+    TheColdPanda,
 }
 
 impl User {
@@ -65,6 +69,9 @@ impl User {
         match self {
             Self::Strosel => 331139,
             Self::Amon8808 => 324351,
+            Self::MathIsMath => 331139, //TODO
+            Self::Urgalurga => 382090,
+            Self::TheColdPanda => 418756,
         }
     }
 
@@ -74,6 +81,9 @@ impl User {
             Text::from(self.to_string()).style(ratatui::style::Style::default().fg(match self {
                 Self::Strosel => tailwind::PINK.c700,
                 Self::Amon8808 => tailwind::SKY.c700,
+                Self::MathIsMath => tailwind::TEAL.c700,
+                Self::Urgalurga => tailwind::ORANGE.c700,
+                Self::TheColdPanda => tailwind::RED.c700,
             })),
         )
     }
@@ -95,8 +105,8 @@ const REQUEST_BODY: &str = r#"
 }
 "#;
 
-pub fn get_collections() -> anyhow::Result<HashMap<User, Collection>> {
-    let mut map = HashMap::<User, Vec<Entry>>::new();
+pub fn get_collections() -> anyhow::Result<Collection> {
+    let mut collections = Collection::with_capacity(1000 * User::VARIANTS.len());
 
     for user in User::VARIANTS {
         let client = Client::new();
@@ -113,12 +123,17 @@ pub fn get_collections() -> anyhow::Result<HashMap<User, Collection>> {
 
         let mut reader = csv::Reader::from_reader(Cursor::new(data.content));
 
-        let col = reader
+        let mut col = reader
             .deserialize::<Entry>()
+            .map(|ent| {
+                let mut ent = ent?;
+                ent.owner = Some(*user);
+                Ok(ent)
+            })
             .collect::<Result<Vec<Entry>, csv::Error>>()?;
 
-        map.insert(*user, col);
+        collections.append(&mut col);
     }
 
-    Ok(map)
+    Ok(collections)
 }
