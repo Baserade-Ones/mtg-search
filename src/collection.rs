@@ -1,12 +1,7 @@
-use ratatui::{
-    text::Text,
-    widgets::{Cell, Row},
-};
+use eframe::egui;
 use reqwest::blocking::Client;
 use std::io::Cursor;
-use strum::VariantArray;
-
-//TODO load collection from api
+use strum::{Display, VariantArray};
 
 #[derive(Debug, Clone, serde::Deserialize)]
 struct Response {
@@ -37,16 +32,29 @@ pub struct Entry {
 }
 
 impl Entry {
-    pub fn as_row(&self) -> Row {
-        Row::new([
-            self.owner.unwrap().to_cell(),
-            Cell::from(Text::from(format!("{}", self.quantity))),
-            Cell::from(Text::from(self.name.clone())),
-            Cell::from(Text::from(self.set.clone())),
-            Cell::from(Text::from(self.multiverse.clone())),
-            Cell::from(Text::from(self.scryfall.clone())),
-            Cell::from(Text::from(format!("{:.2}€", self.price))),
-        ])
+    pub fn as_row(&self, row: &mut egui_extras::TableRow) {
+        let owner = self.owner.unwrap();
+        row.col(|ui| {
+            ui.colored_label(owner, owner.to_string());
+        });
+        row.col(|ui| {
+            ui.label(self.quantity.to_string());
+        });
+        row.col(|ui| {
+            ui.label(self.name.clone());
+        });
+        row.col(|ui| {
+            ui.label(self.set.clone());
+        });
+        row.col(|ui| {
+            ui.label(self.multiverse.clone());
+        });
+        row.col(|ui| {
+            ui.label(self.scryfall.clone());
+        });
+        row.col(|ui| {
+            ui.label(format!("{:.2}€", self.price));
+        });
     }
 
     pub fn matches(&self, search: String) -> bool {
@@ -55,7 +63,7 @@ impl Entry {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, strum::VariantArray, strum::Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, VariantArray, Display)]
 pub enum User {
     Strosel,
     Amon8808,
@@ -74,18 +82,17 @@ impl User {
             Self::TheColdPanda => 418756,
         }
     }
+}
 
-    fn to_cell(self) -> Cell<'static> {
-        use ratatui::style::palette::tailwind;
-        Cell::from(
-            Text::from(self.to_string()).style(ratatui::style::Style::default().fg(match self {
-                Self::Strosel => tailwind::PINK.c700,
-                Self::Amon8808 => tailwind::SKY.c700,
-                Self::MathIsMath => tailwind::TEAL.c700,
-                Self::Urgalurga => tailwind::ORANGE.c700,
-                Self::TheColdPanda => tailwind::RED.c700,
-            })),
-        )
+impl From<User> for egui::Color32 {
+    fn from(value: User) -> Self {
+        match value {
+            User::Strosel => egui::Color32::from_rgb(0xbe, 0x18, 0x5d),
+            User::Amon8808 => egui::Color32::from_rgb(0x03, 0x69, 0xa1),
+            User::MathIsMath => egui::Color32::from_rgb(0x0f, 0x76, 0x6e),
+            User::Urgalurga => egui::Color32::from_rgb(0xc2, 0x41, 0x0c),
+            User::TheColdPanda => egui::Color32::from_rgb(0xb9, 0x1c, 0x1c),
+        }
     }
 }
 
