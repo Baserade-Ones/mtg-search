@@ -26,22 +26,6 @@ impl User {
     }
 }
 
-const REQUEST_BODY: &str = r#"
-{
-    "fields": [
-        "quantity",
-        "card__oracleCard__name",
-        "card__edition__editioncode",
-        "card__multiverseid",
-        "card__uid",
-        "card__prices__cm"
-    ],
-    "page": 1,
-    "game": 1,
-    "pageSize": 10000
-}
-"#;
-
 #[derive(serde::Serialize)]
 struct Body {
     fields: &'static [&'static str],
@@ -64,7 +48,6 @@ pub fn get_collections(owner: &User) -> anyhow::Result<String> {
                 "quantity",
                 "card__oracleCard__name",
                 "card__edition__editioncode",
-                "card__multiverseid",
                 "card__uid",
                 "card__prices__cm",
             ],

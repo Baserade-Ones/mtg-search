@@ -1,6 +1,6 @@
 use crate::collection::Collection;
 
-use eframe::egui::{self, collapsing_header::CollapsingState};
+use eframe::egui::{self};
 use egui_extras::{Column, TableBuilder};
 
 #[derive(Default)]
@@ -26,7 +26,6 @@ impl App {
             .column(Column::exact(20.0))
             .column(Column::exact(200.0))
             .column(Column::exact(50.0))
-            .column(Column::exact(70.0))
             .column(Column::exact(250.0))
             .column(Column::exact(70.0));
 
@@ -43,9 +42,6 @@ impl App {
                 });
                 header.col(|ui| {
                     ui.strong("Set");
-                });
-                header.col(|ui| {
-                    ui.strong("Multiverse");
                 });
                 header.col(|ui| {
                     ui.strong("Scryfall");

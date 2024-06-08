@@ -14,8 +14,6 @@ pub struct Entry {
     name: String,
     #[serde(rename = "Edition Code")]
     set: String,
-    #[serde(rename = "Multiverse Id")]
-    multiverse: String,
     #[serde(rename = "Scryfall ID")]
     scryfall: String,
     #[serde(rename = "Price (Card Market)")]
@@ -38,10 +36,24 @@ impl Entry {
             ui.label(self.set.clone());
         });
         row.col(|ui| {
-            ui.label(self.multiverse.clone());
-        });
-        row.col(|ui| {
-            ui.label(self.scryfall.clone());
+            ui.hyperlink_to(
+                self.scryfall.clone(),
+                format!(
+                    "https://scryfall.com/search?q=scryfall_id%3A{}",
+                    self.scryfall.clone()
+                ),
+            )
+            .on_hover_ui(|ui| {
+                ui.add(
+                    egui::Image::new(format!(
+                        "https://cards.scryfall.io/png/front/{}/{}/{}.png",
+                        self.scryfall.as_bytes()[0] as char,
+                        self.scryfall.as_bytes()[1] as char,
+                        self.scryfall.clone()
+                    ))
+                    .fit_to_exact_size(egui::vec2(146.0, 204.0)),
+                );
+            });
         });
         row.col(|ui| {
             ui.label(format!("{:.2}€", self.price));
