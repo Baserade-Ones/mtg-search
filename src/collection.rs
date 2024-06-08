@@ -48,7 +48,7 @@ impl Entry {
         });
     }
 
-    pub fn matches(&self, search: String) -> bool {
+    pub fn matches(&self, search: &str) -> bool {
         //TODO search syntax
         self.name.to_lowercase().contains(&search.to_lowercase())
     }
