@@ -15,7 +15,7 @@ pub struct Entry {
     #[serde(rename = "Edition Code")]
     set: String,
     #[serde(rename = "Scryfall ID")]
-    scryfall: String,
+    pub scryfall: String,
     #[serde(rename = "Price (Card Market)")]
     price: f32,
 }

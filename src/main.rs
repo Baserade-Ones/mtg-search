@@ -1,16 +1,15 @@
 use app::App;
 use collection::get_collections;
 
-use eframe::egui;
-
 pub mod app;
 pub mod collection;
+pub mod loader;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([900.0, 400.0]),
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([900.0, 400.0]),
         ..Default::default()
     };
 
@@ -22,6 +21,9 @@ fn main() -> Result<(), eframe::Error> {
         Box::new(|cc| {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
+
+            cc.egui_ctx
+                .add_image_loader(std::sync::Arc::new(loader::Image::new()));
 
             Box::new(App::new(data))
         }),
@@ -43,7 +45,15 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|_cc| Box::new(App::new(data))),
+                Box::new(|cc| {
+                    // This gives us image support:
+                    egui_extras::install_image_loaders(&cc.egui_ctx);
+
+                    cc.egui_ctx
+                        .add_image_loader(std::sync::Arc::new(loader::Image::new()));
+
+                    Box::new(App::new(data))
+                }),
             )
             .await
             .expect("failed to start eframe");
