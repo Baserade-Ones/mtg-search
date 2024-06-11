@@ -1,78 +1,59 @@
-use archidekt::User;
-use eframe::egui;
-use std::io::Cursor;
+use archidekt::{Collection, Entry, User};
 use strum::VariantArray;
 
-pub type Collection = Vec<Entry>;
-#[derive(Debug, Clone, serde::Deserialize)]
-pub struct Entry {
-    #[serde(skip)]
-    owner: Option<User>,
-    #[serde(rename = "Quantity")]
-    quantity: u8,
-    #[serde(rename = "Name")]
-    name: String,
-    #[serde(rename = "Edition Code")]
-    set: String,
-    #[serde(rename = "Scryfall ID")]
-    pub scryfall: String,
-    #[serde(rename = "Price (Card Market)")]
-    price: f32,
+pub enum Search {
+    Single {
+        owner: Option<User>,
+        color: [bool; 5],
+        name: String,
+        ty: String,
+    },
+    Wantlist(String),
 }
 
-impl Entry {
-    pub fn as_row(&self, row: &mut egui_extras::TableRow) {
-        let owner = self.owner.unwrap();
-        row.col(|ui| {
-            ui.colored_label(color_code_user(owner), owner.to_string());
-        });
-        row.col(|ui| {
-            ui.label(self.quantity.to_string());
-        });
-        row.col(|ui| {
-            ui.label(self.name.clone());
-        });
-        row.col(|ui| {
-            ui.label(self.set.clone());
-        });
-        row.col(|ui| {
-            ui.hyperlink_to(
-                self.scryfall.clone(),
-                format!(
-                    "https://scryfall.com/search?q=scryfall_id%3A{}",
-                    self.scryfall.clone()
-                ),
-            )
-            .on_hover_ui(|ui| {
-                ui.add(
-                    egui::Image::new(format!(
-                        "https://cards.scryfall.io/png/front/{}/{}/{}.png",
-                        self.scryfall.as_bytes()[0] as char,
-                        self.scryfall.as_bytes()[1] as char,
-                        self.scryfall.clone()
-                    ))
-                    .fit_to_exact_size(egui::vec2(146.0, 204.0)),
-                );
-            });
-        });
-        row.col(|ui| {
-            ui.label(format!("{:.2}€", self.price));
-        });
+impl Search {
+    pub fn single() -> Self {
+        Self::Single {
+            owner: None,
+            color: [false; 5],
+            name: String::new(),
+            ty: String::new(),
+        }
     }
 
-    pub fn matches(&self, search: &str) -> bool {
-        //TODO search syntax
-        self.name.to_lowercase().contains(&search.to_lowercase())
+    pub fn wantlist() -> Self {
+        Search::Wantlist(String::new())
+    }
+
+    pub fn apply(&self, data: &Entry) -> bool {
+        match self {
+            Search::Single {
+                owner,
+                color,
+                name,
+                ty,
+            } => [
+                owner.map_or(true, |owner| owner == data.owner),
+                true, //TODO color filtering
+                data.name.to_lowercase().contains(&name.to_lowercase()),
+                data.ty.to_lowercase().contains(&ty.to_lowercase()),
+            ]
+            .into_iter()
+            .all(|x| x),
+            Search::Wantlist(wantlist) => wantlist
+                .to_lowercase()
+                .lines()
+                .any(|want| data.name.to_lowercase().contains(want)),
+        }
     }
 }
 
-fn color_code_user(value: User) -> egui::Color32 {
-    match value {
-        User::Strosel => egui::Color32::from_rgb(0xbe, 0x18, 0x5d),
-        User::Amon8808 => egui::Color32::from_rgb(0x03, 0x69, 0xa1),
-        //TODO User::MathIsMath => egui::Color32::from_rgb(0x0f, 0x76, 0x6e),
-        User::Urgalurga => egui::Color32::from_rgb(0xc2, 0x41, 0x0c),
-        User::TheColdPanda => egui::Color32::from_rgb(0xb9, 0x1c, 0x1c),
+impl PartialEq for Search {
+    fn eq(&self, other: &Self) -> bool {
+        matches!(
+            (self, other),
+            (Self::Single { .. }, Self::Single { .. }) | (Self::Wantlist(_), Search::Wantlist(_))
+        )
     }
 }
 
@@ -81,20 +62,7 @@ pub fn get_collections() -> anyhow::Result<Collection> {
     let mut collections = Collection::with_capacity(1000 * User::VARIANTS.len());
 
     for user in User::VARIANTS {
-        let data = archidekt::get_collections(user)?;
-
-        let mut reader = csv::Reader::from_reader(Cursor::new(data));
-
-        let mut col = reader
-            .deserialize::<Entry>()
-            .map(|ent| {
-                let mut ent = ent?;
-                ent.owner = Some(*user);
-                Ok(ent)
-            })
-            .collect::<Result<Vec<Entry>, csv::Error>>()?;
-
-        collections.append(&mut col);
+        collections.append(&mut archidekt::get_collections(user)?);
     }
 
     Ok(collections)
@@ -111,15 +79,10 @@ pub async fn get_collections() -> anyhow::Result<Collection> {
             .text()
             .ok_or_else(|| anyhow::Error::msg("Empty CSV body"))?;
 
-        let mut reader = csv::Reader::from_reader(Cursor::new(data));
+        let mut reader = csv::Reader::from_reader(std::io::Cursor::new(data));
 
         let mut col = reader
             .deserialize::<Entry>()
-            .map(|ent| {
-                let mut ent = ent?;
-                ent.owner = Some(*user);
-                Ok(ent)
-            })
             .collect::<Result<Vec<Entry>, csv::Error>>()?;
 
         collections.append(&mut col);

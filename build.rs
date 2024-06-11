@@ -6,8 +6,14 @@ fn main() {
     if matches!(target.as_ref().map(|x| &**x), Ok("wasm32")) {
         for user in User::VARIANTS {
             let data = get_collections(user).expect(&format!("Error fetching user: {user}"));
-            std::fs::write(format!("assets/{user}.csv"), data)
-                .expect(&format!("Error saving user: {user}"));
+
+            let mut wrt = csv::Writer::from_path(format!("assets/{user}.csv"))
+                .expect(&format!("Error creating writer for {user}"));
+            for entry in data {
+                wrt.serialize(entry).unwrap();
+            }
+            wrt.flush()
+                .expect(&format!("Error flushing writer for {user}"));
         }
     }
 }

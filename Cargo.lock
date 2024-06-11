@@ -202,6 +202,7 @@ name = "archidekt"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "csv",
  "ehttp",
  "log",
  "serde",

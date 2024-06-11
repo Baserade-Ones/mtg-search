@@ -1,0 +1,3 @@
+[submodule "mana"]
+	path = mana
+	url = git@github.com:andrewgioia/mana.git

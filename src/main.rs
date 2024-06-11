@@ -9,7 +9,7 @@ pub mod loader;
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
-        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([900.0, 400.0]),
+        viewport: eframe::egui::ViewportBuilder::default().with_inner_size([1000.0, 1000.0]),
         ..Default::default()
     };
 
@@ -24,6 +24,8 @@ fn main() -> Result<(), eframe::Error> {
 
             cc.egui_ctx
                 .add_image_loader(std::sync::Arc::new(loader::Image::new()));
+
+            loader::load_fonts(&cc.egui_ctx);
 
             Box::new(App::new(data))
         }),
@@ -51,6 +53,8 @@ fn main() {
 
                     cc.egui_ctx
                         .add_image_loader(std::sync::Arc::new(loader::Image::new()));
+
+                    loader::load_fonts(&cc.egui_ctx);
 
                     Box::new(App::new(data))
                 }),

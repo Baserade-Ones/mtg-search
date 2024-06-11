@@ -6,6 +6,23 @@ use egui::{
 };
 use std::{collections::HashMap, mem::size_of, sync::Arc};
 
+pub fn load_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+
+    let fallback = fonts.families.get(&egui::FontFamily::Proportional).unwrap()[0].clone();
+
+    fonts.font_data.insert(
+        "Mana".to_owned(),
+        egui::FontData::from_static(include_bytes!("../mana/fonts/mana.ttf")),
+    );
+    fonts.families.insert(
+        egui::FontFamily::Name("Mana".into()),
+        vec!["Mana".to_owned(), fallback.clone()],
+    );
+
+    ctx.set_fonts(fonts);
+}
+
 /// Simplified rewrite if egui_extras::ImageCrateLoader which refuses to work on WASM for unclear
 /// reasons
 #[derive(Default)]
@@ -25,7 +42,6 @@ impl ImageLoader for Image {
     }
 
     fn load(&self, ctx: &egui::Context, uri: &str, _: SizeHint) -> ImageLoadResult {
-        log::error!("Loading: {uri}");
         let mut cache = self.cache.lock();
         if let Some(image) = cache.get(uri).cloned() {
             Ok(ImagePoll::Ready { image })

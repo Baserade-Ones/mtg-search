@@ -11,11 +11,23 @@ struct Response {
     more: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, VariantArray, Display, FromRepr)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    VariantArray,
+    Display,
+    FromRepr,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum User {
     Strosel = 331139,
     Amon8808 = 324351,
-    //TODO MathIsMath = 0,
+    MathIsMath = 358259,
     Urgalurga = 382090,
     TheColdPanda = 418756,
 }
@@ -35,9 +47,63 @@ struct Body {
     size: u32,
 }
 
+#[derive(serde::Deserialize)]
+struct RawEntry {
+    #[serde(rename = "Quantity")]
+    quantity: u8,
+    #[serde(rename = "Name")]
+    name: String,
+    #[serde(rename = "Edition Code")]
+    set: String,
+    #[serde(rename = "Scryfall ID")]
+    scryfall: String,
+    #[serde(rename = "Price (Card Market)")]
+    price: f32,
+}
+
+pub type Collection = Vec<Entry>;
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct Entry {
+    pub owner: User,
+    pub quantity: u8,
+    pub color_identity: String,
+    pub name: String,
+    pub ty: String,
+    pub set: String,
+    pub scryfall: String,
+    pub price: f32,
+}
+
+impl Entry {
+    pub fn headers() -> impl Iterator<Item = &'static str> {
+        [
+            "Owner", "X", "Color Id", "Name", "Type", "Set", "Scryfall", "Price",
+        ]
+        .into_iter()
+    }
+
+    pub fn values(&self) -> impl Iterator<Item = (&'static str, String)> {
+        Self::headers().zip([
+            self.owner.to_string(),
+            self.quantity.to_string(),
+            self.color_identity.clone(),
+            self.name.clone(),
+            self.ty.clone(),
+            self.set.clone(),
+            self.scryfall.clone(),
+            format!("{:.2}€", self.price),
+        ])
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+mod scryfall;
+
 #[cfg(not(target_arch = "wasm32"))]
 ///Gets a user's collection as a CSV String
-pub fn get_collections(owner: &User) -> anyhow::Result<String> {
+pub fn get_collections(owner: &User) -> anyhow::Result<Collection> {
+    let oracle = scryfall::fetch_oracle_cards()?;
+
     let req = ehttp::Request::json(
         format!(
             "https://archidekt.com/api/collection/export/v2/{}/",
@@ -61,5 +127,33 @@ pub fn get_collections(owner: &User) -> anyhow::Result<String> {
         .map_err(anyhow::Error::msg)?
         .json()?;
 
-    Ok(data.content)
+    let mut reader = csv::Reader::from_reader(std::io::Cursor::new(data.content));
+
+    let col = reader
+        .deserialize::<RawEntry>()
+        .map(|ent| {
+            let RawEntry {
+                quantity,
+                name,
+                set,
+                scryfall,
+                price,
+            } = ent.map_err(anyhow::Error::msg)?;
+            let scryfall::Card { ty, color_identity } = oracle
+                .get(&scryfall)
+                .ok_or(anyhow::Error::msg("Card missing in oracle"))?;
+            Ok(Entry {
+                owner: *owner,
+                quantity,
+                color_identity: color_identity.clone(),
+                name,
+                ty: ty.clone(),
+                set,
+                scryfall,
+                price,
+            })
+        })
+        .collect::<anyhow::Result<Vec<Entry>>>()?;
+
+    Ok(col)
 }

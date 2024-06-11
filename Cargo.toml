@@ -11,8 +11,7 @@ eframe = "0.27.2"
 egui_extras = { version = "0.27.2", features = ["http"] }
 image = { version = "0.25", features = ["png"] }
 
-csv = "1.3.0"
-
+csv.workspace = true
 archidekt.workspace = true
 serde.workspace = true
 anyhow.workspace = true
@@ -29,6 +28,7 @@ ehttp.workspace = true
 wasm-bindgen-futures = "0.4"
 
 [build-dependencies]
+csv.workspace = true
 archidekt.workspace = true
 strum.workspace = true
 
@@ -41,6 +41,7 @@ members = [
 ]
 
 [workspace.dependencies]
+csv = "1.3.0"
 archidekt = { path = "./archidekt" }
 ehttp = { version = "0.5.0", features = ["json"] }
 serde = { version = "1.0.203", features = ["derive"] }
