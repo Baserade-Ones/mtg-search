@@ -17,11 +17,11 @@ fn color_code_user(value: User) -> egui::Color32 {
 
 fn color_ident(color: char) -> egui::RichText {
     match color {
-        'W' => egui::RichText::new("\u{e600}").color(Color32::from_rgb(248, 231, 185)),
-        'U' => egui::RichText::new("\u{e601}").color(Color32::from_rgb(179, 206, 234)),
-        'B' => egui::RichText::new("\u{e602}").color(Color32::from_rgb(166, 159, 157)),
-        'R' => egui::RichText::new("\u{e603}").color(Color32::from_rgb(235, 159, 130)),
-        'G' => egui::RichText::new("\u{e604}").color(Color32::from_rgb(196, 211, 202)),
+        'W' => egui::RichText::new("\u{e600}").color(Color32::from_rgb(251, 246, 211)),
+        'U' => egui::RichText::new("\u{e601}").color(Color32::from_rgb(150, 196, 212)),
+        'B' => egui::RichText::new("\u{e602}").color(Color32::from_rgb(176, 168, 163)),
+        'R' => egui::RichText::new("\u{e603}").color(Color32::from_rgb(216, 143, 115)),
+        'G' => egui::RichText::new("\u{e604}").color(Color32::from_rgb(147, 203, 164)),
         _ => egui::RichText::new("\u{e904}"),
     }
     .font(egui::FontId {

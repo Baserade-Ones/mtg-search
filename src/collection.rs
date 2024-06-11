@@ -1,4 +1,5 @@
 use archidekt::{Collection, Entry, User};
+use std::collections::HashSet;
 use strum::VariantArray;
 
 pub enum Search {
@@ -34,7 +35,14 @@ impl Search {
                 ty,
             } => [
                 owner.map_or(true, |owner| owner == data.owner),
-                true, //TODO color filtering
+                color.iter().all(|x| !x)
+                    || (&data.color_identity.chars().collect::<HashSet<_>>()
+                        - &color
+                            .iter()
+                            .zip("WUBRG".chars())
+                            .filter_map(|(on, c)| on.then_some(c))
+                            .collect::<HashSet<_>>())
+                        .is_empty(),
                 data.name.to_lowercase().contains(&name.to_lowercase()),
                 data.ty.to_lowercase().contains(&ty.to_lowercase()),
             ]
