@@ -12,6 +12,7 @@ fn color_code_user(value: User) -> egui::Color32 {
         User::MathIsMath => Color32::from_rgb(0x0f, 0x76, 0x6e),
         User::Urgalurga => Color32::from_rgb(0xc2, 0x41, 0x0c),
         User::TheColdPanda => Color32::from_rgb(0xb9, 0x1c, 0x1c),
+        User::VikinGG => Color32::from_rgb(0xc1, 0x54, 0xc1),
     }
 }
 
@@ -174,15 +175,13 @@ impl eframe::App for App {
                         });
                     });
                 }
-                Search::Wantlist(ref mut wantlist) => {
+                Search::Wantlist(ref mut list) => {
                     ui.label("Wantlist");
                     egui::ScrollArea::vertical()
                         .id_source("wantlist")
                         .max_height(150.0)
                         .show(ui, |ui| {
-                            egui::TextEdit::multiline(wantlist)
-                                .desired_rows(10)
-                                .show(ui);
+                            egui::TextEdit::multiline(list).desired_rows(10).show(ui);
                         });
                 }
             }

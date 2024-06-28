@@ -48,7 +48,7 @@ impl Search {
             ]
             .into_iter()
             .all(|x| x),
-            Search::Wantlist(wantlist) => wantlist
+            Search::Wantlist(list) => list
                 .to_lowercase()
                 .lines()
                 .any(|want| data.name.to_lowercase().contains(want)),
@@ -60,7 +60,8 @@ impl PartialEq for Search {
     fn eq(&self, other: &Self) -> bool {
         matches!(
             (self, other),
-            (Self::Single { .. }, Self::Single { .. }) | (Self::Wantlist(_), Search::Wantlist(_))
+            (Self::Single { .. }, Self::Single { .. })
+                | (Self::Wantlist { .. }, Search::Wantlist { .. })
         )
     }
 }

@@ -30,6 +30,7 @@ pub enum User {
     MathIsMath = 358259,
     Urgalurga = 382090,
     TheColdPanda = 418756,
+    VikinGG = 454044,
 }
 
 impl User {
