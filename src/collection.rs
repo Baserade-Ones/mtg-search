@@ -9,7 +9,7 @@ pub enum Search {
         name: String,
         ty: String,
     },
-    Wantlist(String),
+    Wantlist(String, Option<User>),
 }
 
 impl Search {
@@ -23,7 +23,7 @@ impl Search {
     }
 
     pub fn wantlist() -> Self {
-        Search::Wantlist(String::new())
+        Search::Wantlist(String::new(), None)
     }
 
     pub fn apply(&self, data: &Entry) -> bool {
@@ -48,10 +48,10 @@ impl Search {
             ]
             .into_iter()
             .all(|x| x),
-            Search::Wantlist(list) => list
-                .to_lowercase()
-                .lines()
-                .any(|want| data.name.to_lowercase().contains(want)),
+            Search::Wantlist(list, owner) => list.to_lowercase().lines().any(|want| {
+                (owner.is_none() || owner.is_some_and(|owner| owner == data.owner))
+                    && data.name.to_lowercase().contains(want)
+            }),
         }
     }
 }

@@ -175,7 +175,7 @@ impl eframe::App for App {
                         });
                     });
                 }
-                Search::Wantlist(ref mut list) => {
+                Search::Wantlist(ref mut list, ref mut owner) => {
                     ui.label("Wantlist");
                     egui::ScrollArea::vertical()
                         .id_source("wantlist")
@@ -183,6 +183,20 @@ impl eframe::App for App {
                         .show(ui, |ui| {
                             egui::TextEdit::multiline(list).desired_rows(10).show(ui);
                         });
+
+                    ui.spacing();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Owner:");
+                        egui::ComboBox::from_id_source("owner")
+                            .selected_text(owner.map_or(String::new(), |owner| owner.to_string()))
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(owner, None, "");
+                                for user in archidekt::User::VARIANTS {
+                                    ui.selectable_value(owner, Some(*user), user.to_string());
+                                }
+                            })
+                    });
                 }
             }
 
