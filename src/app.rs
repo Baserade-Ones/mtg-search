@@ -1,4 +1,4 @@
-use crate::collection::Search;
+use crate::collection::*;
 use archidekt::{Collection, Entry, User};
 use strum::VariantArray;
 
@@ -34,6 +34,7 @@ fn color_ident(color: char) -> egui::RichText {
 pub struct App {
     data: Collection,
     search: Search,
+    dedup: bool,
 }
 
 impl App {
@@ -41,6 +42,7 @@ impl App {
         Self {
             data,
             search: Search::single(),
+            dedup: false,
         }
     }
 
@@ -70,7 +72,7 @@ impl App {
                     .data
                     .iter()
                     .filter(|&data| self.search.apply(data))
-                    .cloned()
+                    .dedup_cards(self.dedup)
                     .collect();
                 body.rows(20.0, data.len(), |mut row| {
                     let row_index = row.index();
@@ -124,6 +126,8 @@ impl eframe::App for App {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut self.search, Search::single(), "Simple");
                 ui.selectable_value(&mut self.search, Search::wantlist(), "Wantlist");
+                ui.separator();
+                ui.checkbox(&mut self.dedup, "Group printings?");
             });
 
             match self.search {

@@ -99,3 +99,54 @@ pub async fn get_collections() -> anyhow::Result<Collection> {
 
     Ok(collections)
 }
+
+pub struct CardDeduper<'a, I>
+where
+    I: Iterator<Item = &'a Entry>,
+{
+    on: bool,
+    iter: std::iter::Peekable<I>,
+}
+
+impl<'a, I> Iterator for CardDeduper<'a, I>
+where
+    I: Iterator<Item = &'a Entry>,
+{
+    type Item = Entry;
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.on {
+            return self.iter.next().cloned();
+        }
+
+        match self.iter.next().cloned() {
+            Some(mut head) => {
+                while let Some(next) = self
+                    .iter
+                    .next_if(|next| next.name == head.name && next.owner == head.owner)
+                {
+                    head.quantity += next.quantity;
+                    if next.set != head.set {
+                        head.set.clear();
+                        head.price = -1.0;
+                    }
+                }
+                Some(head)
+            }
+            None => None,
+        }
+    }
+}
+
+pub trait CardDeduperExt<'a>
+where
+    Self: Sized + Iterator<Item = &'a Entry>,
+{
+    fn dedup_cards(self, on: bool) -> CardDeduper<'a, Self> {
+        CardDeduper {
+            on,
+            iter: self.peekable(),
+        }
+    }
+}
+
+impl<'a, I> CardDeduperExt<'a> for I where I: Sized + Iterator<Item = &'a Entry> {}
