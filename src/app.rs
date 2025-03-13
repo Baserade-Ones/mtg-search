@@ -13,6 +13,8 @@ fn color_code_user(value: User) -> egui::Color32 {
         User::Urgalurga => Color32::from_rgb(0xc2, 0x41, 0x0c),
         User::TheColdPanda => Color32::from_rgb(0xb9, 0x1c, 0x1c),
         User::VikinGG => Color32::from_rgb(0xc1, 0x54, 0xc1),
+        //User::Elin => Color32::from_rgb(0xc0, 0x34 ,0xeb),
+        User::OliverDizz => Color32::from_rgb(0x00, 0x61, 0x0d),
     }
 }
 

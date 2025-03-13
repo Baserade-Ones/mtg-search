@@ -31,6 +31,8 @@ pub enum User {
     Urgalurga = 382090,
     TheColdPanda = 418756,
     VikinGG = 454044,
+    //Elin = 000
+    OliverDizz = 603907,
 }
 
 impl User {
