@@ -48,6 +48,21 @@ impl App {
         }
     }
 
+    pub fn creator(data: Collection) -> eframe::AppCreator<'static> {
+        use super::loader;
+        Box::new(|cc| {
+            // This gives us image support:
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+
+            cc.egui_ctx
+                .add_image_loader(std::sync::Arc::new(loader::Image::new()));
+
+            loader::load_fonts(&cc.egui_ctx);
+
+            Ok(Box::new(App::new(data)))
+        })
+    }
+
     fn mk_table(&self, ui: &mut egui::Ui) {
         let table = TableBuilder::new(ui)
             .resizable(false)
@@ -147,7 +162,7 @@ impl eframe::App for App {
                     ui.collapsing("Advanced", |ui| {
                         ui.horizontal(|ui| {
                             ui.label("Owner:");
-                            egui::ComboBox::from_id_source("owner")
+                            egui::ComboBox::from_id_salt("owner")
                                 .selected_text(
                                     owner.map_or(String::new(), |owner| owner.to_string()),
                                 )
@@ -184,7 +199,7 @@ impl eframe::App for App {
                 Search::Wantlist(ref mut list, ref mut owner) => {
                     ui.label("Wantlist");
                     egui::ScrollArea::vertical()
-                        .id_source("wantlist")
+                        .id_salt("wantlist")
                         .max_height(150.0)
                         .show(ui, |ui| {
                             egui::TextEdit::multiline(list).desired_rows(10).show(ui);
@@ -194,7 +209,7 @@ impl eframe::App for App {
 
                     ui.horizontal(|ui| {
                         ui.label("Owner:");
-                        egui::ComboBox::from_id_source("owner")
+                        egui::ComboBox::from_id_salt("owner")
                             .selected_text(owner.map_or(String::new(), |owner| owner.to_string()))
                             .show_ui(ui, |ui| {
                                 ui.selectable_value(owner, None, "");

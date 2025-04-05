@@ -2,6 +2,9 @@
 
 use strum::{Display, FromRepr, VariantArray};
 
+mod color;
+pub use color::ColorIdent;
+
 #[derive(Debug, Clone, serde::Deserialize)]
 struct Response {
     content: String,
@@ -65,17 +68,26 @@ struct RawEntry {
 }
 
 pub type Collection = Vec<Entry>;
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Entry {
     pub owner: User,
     pub quantity: u8,
-    pub color_identity: String,
+    pub color_identity: ColorIdent,
     pub name: String,
     pub ty: String,
     pub set: String,
     pub scryfall: String,
     pub price: f32,
 }
+
+//TODO improve Entry to reduce disk size
+// - Use alternate format instead of csv
+//   - Store in deduped state as a "tree"
+//      - Tree on disk, Table in memory
+//      1. Owner -> [Card], Card -> {Name, ty, set, color, [Edition]}, Edition = {quantity, set,
+//      2. Card -> {Name, ty, set, color, [Edition]}, Edition = {quantity, set,
+//      scryfall, price, [Owners]}
+// - Use compression? Brotli etc?
 
 impl Entry {
     pub fn headers() -> impl Iterator<Item = &'static str> {
@@ -89,7 +101,7 @@ impl Entry {
         Self::headers().zip([
             self.owner.to_string(),
             self.quantity.to_string(),
-            self.color_identity.clone(),
+            self.color_identity.into(),
             self.name.clone(),
             self.ty.clone(),
             self.set.clone(),
@@ -105,7 +117,7 @@ mod scryfall;
 #[cfg(not(target_arch = "wasm32"))]
 ///Gets a user's collection as a CSV String
 pub fn get_collections(owner: &User) -> anyhow::Result<Collection> {
-    let oracle = scryfall::fetch_oracle_cards()?;
+    let mut oracle = scryfall::fetch_oracle_cards()?;
 
     let req = ehttp::Request::json(
         format!(
@@ -143,12 +155,12 @@ pub fn get_collections(owner: &User) -> anyhow::Result<Collection> {
                 price,
             } = ent.map_err(anyhow::Error::msg)?;
             let scryfall::Card { ty, color_identity } = oracle
-                .get(&scryfall)
-                .ok_or(anyhow::Error::msg("Card missing in oracle"))?;
+                .get(&name)
+                .ok_or(anyhow::format_err!("Card missing in oracle: {name:?}"))?;
             Ok(Entry {
                 owner: *owner,
                 quantity,
-                color_identity: color_identity.clone(),
+                color_identity: *color_identity,
                 name,
                 ty: ty.clone(),
                 set,

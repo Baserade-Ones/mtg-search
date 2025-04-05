@@ -18,17 +18,7 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "My egui App",
         options,
-        Box::new(|cc| {
-            // This gives us image support:
-            egui_extras::install_image_loaders(&cc.egui_ctx);
-
-            cc.egui_ctx
-                .add_image_loader(std::sync::Arc::new(loader::Image::new()));
-
-            loader::load_fonts(&cc.egui_ctx);
-
-            Box::new(App::new(data))
-        }),
+        App::creator(data),
     )
 }
 
@@ -43,21 +33,16 @@ fn main() {
         let data = get_collections()
             .await
             .expect("Failed fetching collections");
+
+        let window = web_sys::window().expect("no global `window` exists");
+        let document = window.document().expect("should have a document on window");
+        let canvas = document.get_element_by_id("the_canvas_id").expect("should have a canvas in document");
+
         eframe::WebRunner::new()
             .start(
-                "the_canvas_id", // hardcode it
+                web_sys::HtmlCanvasElement::from(wasm_bindgen::JsValue::from(canvas)),
                 web_options,
-                Box::new(|cc| {
-                    // This gives us image support:
-                    egui_extras::install_image_loaders(&cc.egui_ctx);
-
-                    cc.egui_ctx
-                        .add_image_loader(std::sync::Arc::new(loader::Image::new()));
-
-                    loader::load_fonts(&cc.egui_ctx);
-
-                    Box::new(App::new(data))
-                }),
+                App::creator(data),
             )
             .await
             .expect("failed to start eframe");

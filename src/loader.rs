@@ -13,7 +13,9 @@ pub fn load_fonts(ctx: &egui::Context) {
 
     fonts.font_data.insert(
         "Mana".to_owned(),
-        egui::FontData::from_static(include_bytes!("../mana/fonts/mana.ttf")),
+        Arc::new(egui::FontData::from_static(include_bytes!(
+            "../mana/fonts/mana.ttf"
+        ))),
     );
     fonts.families.insert(
         egui::FontFamily::Name("Mana".into()),

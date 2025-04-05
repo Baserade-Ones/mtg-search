@@ -1,11 +1,10 @@
-use archidekt::{Collection, Entry, User};
-use std::collections::HashSet;
+use archidekt::{Collection, Entry, User, ColorIdent};
 use strum::VariantArray;
 
 pub enum Search {
     Single {
         owner: Option<User>,
-        color: [bool; 5],
+        color: ColorIdent,
         name: String,
         ty: String,
     },
@@ -16,7 +15,7 @@ impl Search {
     pub fn single() -> Self {
         Self::Single {
             owner: None,
-            color: [false; 5],
+            color: ColorIdent::new(),
             name: String::new(),
             ty: String::new(),
         }
@@ -33,23 +32,18 @@ impl Search {
                 color,
                 name,
                 ty,
-            } => [
-                owner.map_or(true, |owner| owner == data.owner),
-                color.iter().all(|x| !x)
-                    || (&data.color_identity.chars().collect::<HashSet<_>>()
-                        - &color
-                            .iter()
-                            .zip("WUBRG".chars())
-                            .filter_map(|(on, c)| on.then_some(c))
-                            .collect::<HashSet<_>>())
-                        .is_empty(),
-                data.name.to_lowercase().contains(&name.to_lowercase()),
-                data.ty.to_lowercase().contains(&ty.to_lowercase()),
-            ]
+            } => {
+                [
+                 owner.is_none_or(|owner| owner == data.owner),
+                 color.contains(&data.color_identity),
+                 data.name.to_lowercase().contains(&name.to_lowercase()),
+                 data.ty.to_lowercase().contains(&ty.to_lowercase()),
+                ]
             .into_iter()
-            .all(|x| x),
+            .all(|x| x)
+            },
             Search::Wantlist(list, owner) => list.to_lowercase().lines().any(|want| {
-                (owner.is_none() || owner.is_some_and(|owner| owner == data.owner))
+                (owner.is_none_or(|owner| owner == data.owner))
                     && data.name.to_lowercase().contains(want)
             }),
         }
@@ -100,6 +94,7 @@ pub async fn get_collections() -> anyhow::Result<Collection> {
     Ok(collections)
 }
 
+//TODO move dedup to own module
 pub struct CardDeduper<'a, I>
 where
     I: Iterator<Item = &'a Entry>,
