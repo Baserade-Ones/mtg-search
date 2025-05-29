@@ -151,6 +151,7 @@ impl eframe::App for App {
                 Search::Single {
                     ref mut owner,
                     ref mut color,
+                    ref mut colorless,
                     ref mut name,
                     ref mut ty,
                 } => {
@@ -183,8 +184,17 @@ impl eframe::App for App {
                                     .add(egui::SelectableLabel::new(color[i], color_ident(c)))
                                     .clicked()
                                 {
-                                    color[i] = !color[i]
+                                    color[i] = !color[i];
+                                    *colorless = false;
                                 }
+                            }
+
+                            if ui
+                                .add(egui::SelectableLabel::new(*colorless, color_ident('C')))
+                                .clicked()
+                            {
+                                *colorless = !*colorless;
+                                **color = [false; 5];
                             }
                         });
 
