@@ -15,36 +15,38 @@ fn main() -> Result<(), eframe::Error> {
 
     let data = get_collections().expect("Failed fetching collections");
 
-    eframe::run_native(
-        "My egui App",
-        options,
-        App::creator(data),
-    )
+    eframe::run_native("My egui App", options, App::creator(data))
 }
+
+#[cfg(target_arch = "wasm32")]
+mod web;
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
     // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
-    let web_options = eframe::WebOptions::default();
-
     wasm_bindgen_futures::spawn_local(async {
-        let data = get_collections()
-            .await
-            .expect("Failed fetching collections");
+        let document = web_sys::window()
+            .and_then(|window| window.document())
+            .expect("No document");
 
-        let window = web_sys::window().expect("no global `window` exists");
-        let document = window.document().expect("should have a document on window");
-        let canvas = document.get_element_by_id("the_canvas_id").expect("should have a canvas in document");
+        let start_result = web::start_web(&document).await;
 
-        eframe::WebRunner::new()
-            .start(
-                web_sys::HtmlCanvasElement::from(wasm_bindgen::JsValue::from(canvas)),
-                web_options,
-                App::creator(data),
-            )
-            .await
-            .expect("failed to start eframe");
+        // Remove the loading text and spinner:
+        if let Some(loading_text) = document.get_element_by_id("loading_text") {
+            match start_result {
+                Ok(_) => {
+                    loading_text.remove();
+                }
+                Err(e) => {
+                    loading_text.set_inner_html(
+                        "<p> The app has crashed. See the developer console for details. </p>",
+                    );
+                    log::error!("Failed to start eframe: {e:?}");
+                    panic!("Failed to start eframe: {e:?}");
+                }
+            }
+        }
     });
 }
