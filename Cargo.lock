@@ -222,6 +222,7 @@ dependencies = [
  "log",
  "serde",
  "strum",
+ "winnow",
 ]
 
 [[package]]

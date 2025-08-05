@@ -26,7 +26,9 @@
         pkgs = import nixpkgs {inherit system overlays;};
         inherit (pkgs) lib;
 
-        rustToolchain = pkgs.rust-bin.stable."1.88.0".default;
+        rustToolchain = pkgs.rust-bin.stable."1.88.0".default.override {
+          targets = ["wasm32-unknown-unknown"];
+        };
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
 
         src = lib.cleanSourceWith {
@@ -50,6 +52,7 @@
           vulkan-loader
           wayland
           libGL
+          trunk
         ];
 
         # because we'll use it for both `cargoArtifacts` and `bin`

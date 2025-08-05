@@ -12,6 +12,7 @@ serde.workspace = true
 anyhow.workspace = true
 strum.workspace = true
 log.workspace = true
+winnow = "0.7"
 
 [build-dependencies]
 ehttp.workspace = true

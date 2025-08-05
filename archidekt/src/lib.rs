@@ -57,8 +57,14 @@ struct Body {
 struct RawEntry {
     #[serde(rename = "Quantity")]
     quantity: u8,
+    #[serde(rename = "Identities")]
+    color_identity: ColorIdent,
     #[serde(rename = "Name")]
     name: String,
+    #[serde(rename = "Super-types")]
+    supertypes: String,
+    #[serde(rename = "Types")]
+    types: String,
     #[serde(rename = "Edition Code")]
     set: String,
     #[serde(rename = "Scryfall ID")]
@@ -79,15 +85,6 @@ pub struct Entry {
     pub scryfall: String,
     pub price: f32,
 }
-
-//TODO improve Entry to reduce disk size
-// - Use alternate format instead of csv
-//   - Store in deduped state as a "tree"
-//      - Tree on disk, Table in memory
-//      1. Owner -> [Card], Card -> {Name, ty, set, color, [Edition]}, Edition = {quantity, set,
-//      2. Card -> {Name, ty, set, color, [Edition]}, Edition = {quantity, set,
-//      scryfall, price, [Owners]}
-// - Use compression? Brotli etc?
 
 impl Entry {
     pub fn headers() -> impl Iterator<Item = &'static str> {
@@ -112,13 +109,8 @@ impl Entry {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-mod scryfall;
-
-#[cfg(not(target_arch = "wasm32"))]
 ///Gets a user's collection as a CSV String
 pub fn get_collections(owner: &User) -> anyhow::Result<Collection> {
-    let mut oracle = scryfall::fetch_oracle_cards()?;
-
     let req = ehttp::Request::json(
         format!(
             "https://archidekt.com/api/collection/export/v2/{}/",
@@ -131,6 +123,9 @@ pub fn get_collections(owner: &User) -> anyhow::Result<Collection> {
                 "card__edition__editioncode",
                 "card__uid",
                 "card__prices__cm",
+                "card__supertypes",
+                "card__types",
+                "card__colorIdentity",
             ],
             page: 1,
             game: 1,
@@ -153,16 +148,22 @@ pub fn get_collections(owner: &User) -> anyhow::Result<Collection> {
                 set,
                 scryfall,
                 price,
+                color_identity,
+                supertypes,
+                types,
             } = ent.map_err(anyhow::Error::msg)?;
-            let scryfall::Card { ty, color_identity } = oracle
-                .get(&name)
-                .ok_or(anyhow::format_err!("Card missing in oracle: {name:?}"))?;
+            let ty = if supertypes.is_empty() {
+                types
+            } else {
+                format!("{supertypes},{types}")
+            };
+
             Ok(Entry {
                 owner: *owner,
                 quantity,
-                color_identity: *color_identity,
+                color_identity,
                 name,
-                ty: ty.clone(),
+                ty,
                 set,
                 scryfall,
                 price,
