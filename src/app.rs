@@ -154,6 +154,7 @@ impl eframe::App for App {
                     ref mut colorless,
                     ref mut name,
                     ref mut ty,
+                    ref mut set,
                 } => {
                     ui.horizontal(|ui| {
                         ui.label("Search: ");
@@ -203,6 +204,13 @@ impl eframe::App for App {
                         ui.horizontal(|ui| {
                             ui.label("Type: ");
                             egui::TextEdit::singleline(ty).show(ui);
+                        });
+
+                        ui.spacing();
+
+                        ui.horizontal(|ui| {
+                            ui.label("Set Code: ");
+                            egui::TextEdit::singleline(set).show(ui);
                         });
                     });
                 }

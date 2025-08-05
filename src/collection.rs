@@ -8,6 +8,7 @@ pub enum Search {
         colorless: bool,
         name: String,
         ty: String,
+        set: String,
     },
     Wantlist(String, Option<User>),
 }
@@ -20,6 +21,7 @@ impl Search {
             colorless: false,
             name: String::new(),
             ty: String::new(),
+            set: String::new(),
         }
     }
 
@@ -35,18 +37,35 @@ impl Search {
                 colorless,
                 name,
                 ty,
-            } => [
-                owner.is_none_or(|owner| owner == data.owner),
-                if *colorless || color.iter().any(|c| *c) {
+                set,
+            } => {
+                let match_owner = owner.is_none_or(|owner| owner == data.owner);
+
+                let match_ident = if *colorless || color.iter().any(|c| *c) {
                     color.contains(&data.color_identity)
                 } else {
                     true
-                },
-                data.name.to_lowercase().contains(&name.to_lowercase()),
-                data.ty.to_lowercase().contains(&ty.to_lowercase()),
-            ]
-            .into_iter()
-            .all(|x| x),
+                };
+
+                let match_name = data.name.to_lowercase().contains(&name.to_lowercase());
+
+                let searched_types: Vec<_> = ty
+                    .split(|c: char| !c.is_ascii_alphabetic())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                let match_types = searched_types.iter().all(|t1| {
+                    data.ty
+                        .to_lowercase()
+                        .split(',')
+                        .any(|t2| t2.contains(&t1.to_lowercase()))
+                });
+
+                let match_set = data.set.to_lowercase().contains(&set.to_lowercase());
+
+                [match_owner, match_ident, match_name, match_types, match_set]
+                    .into_iter()
+                    .all(|x| x)
+            }
             Search::Wantlist(list, owner) => list.to_lowercase().lines().any(|want| {
                 (owner.is_none_or(|owner| owner == data.owner))
                     && data.name.to_lowercase().contains(want)
