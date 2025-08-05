@@ -181,7 +181,7 @@ impl eframe::App for App {
                             ui.label("Color Identity:");
                             for (i, c) in "WUBRG".chars().enumerate() {
                                 if ui
-                                    .add(egui::SelectableLabel::new(color[i], color_ident(c)))
+                                    .add(egui::Button::selectable(color[i], color_ident(c)))
                                     .clicked()
                                 {
                                     color[i] = !color[i];
@@ -190,7 +190,7 @@ impl eframe::App for App {
                             }
 
                             if ui
-                                .add(egui::SelectableLabel::new(*colorless, color_ident('C')))
+                                .add(egui::Button::selectable(*colorless, color_ident('C')))
                                 .clicked()
                             {
                                 *colorless = !*colorless;

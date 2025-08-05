@@ -7,8 +7,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-eframe = "0.31"
-egui_extras = { version = "0.31", features = ["http"] }
+eframe = "0.32"
+egui_extras = { version = "0.32", features = ["http"] }
 image = { version = "0.25", features = ["png"] }
 
 csv.workspace = true

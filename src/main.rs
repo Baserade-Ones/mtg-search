@@ -1,12 +1,12 @@
-use app::App;
-use collection::get_collections;
-
 pub mod app;
 pub mod collection;
 pub mod loader;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), eframe::Error> {
+    use app::App;
+    use collection::get_collections;
+
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default().with_inner_size([1000.0, 1000.0]),
